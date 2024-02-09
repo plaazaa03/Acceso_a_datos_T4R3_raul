@@ -105,9 +105,30 @@ public class App
     }
 
     private static void insercionAsignaturas() {
+        Scanner scanner = new Scanner(System.in);
+        Transaction transaction = session.beginTransaction();
+        AsignaturaClass asignaturaClass = new AsignaturaClass();
+
+        System.out.println("Introduce el codigo de la asignatura: ");
+        int codAsignatura = scanner.nextInt();
+
+        System.out.println("Introduce el nombre de la asignatura: ");
+        String nomAsignatura = scanner.next();
+
+        System.out.println("Introduce los creditos de la asignatura: ");
+        int creditosAsignatura = scanner.nextInt();
+
+        asignaturaClass.setCodigo(codAsignatura);
+        asignaturaClass.setNombre(nomAsignatura);
+        asignaturaClass.setCreditos(creditosAsignatura);
+
+        transaction.commit();
+        session.save(asignaturaClass);
+
     }
 
     private static void insercionMatriculas() {
+
     }
 
     private static void mostrarAlumnos() {
