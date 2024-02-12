@@ -11,7 +11,7 @@ public class AsignaturaClass {
     private Integer creditos;
     private List<AlumnoClass> lista_alumnos;
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "codigo", nullable = false)
     public int getCodigo() {

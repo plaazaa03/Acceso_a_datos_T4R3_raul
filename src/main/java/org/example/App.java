@@ -1,9 +1,14 @@
 package org.example;
 
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
 /**
@@ -100,8 +105,8 @@ public class App
         alumnoClass.setApellidos(apellAlumno);
         alumnoClass.setTfno(tlfAlumno);
 
-        transaction.commit();
         session.save(alumnoClass);
+        transaction.commit();
     }
 
     private static void insercionAsignaturas() {
@@ -122,9 +127,8 @@ public class App
         asignaturaClass.setNombre(nomAsignatura);
         asignaturaClass.setCreditos(creditosAsignatura);
 
-        transaction.commit();
         session.save(asignaturaClass);
-
+        transaction.commit();
     }
 
     private static void insercionMatriculas() {
@@ -132,20 +136,134 @@ public class App
     }
 
     private static void mostrarAlumnos() {
+
+        AlumnoClass alumnoClass = new AlumnoClass();
+        Query query = session.createQuery("from AlumnoClass ");
+        List<AlumnoClass> lista = query.list();
+        Iterator <AlumnoClass> iterator = lista.iterator();
+
+        while (iterator.hasNext()){
+            alumnoClass = (AlumnoClass) iterator.next();
+            System.out.println("==========================");
+            System.out.println("Codigo: " + alumnoClass.getCodigo());
+            System.out.println("Nombre: " + alumnoClass.getNombre());
+            System.out.println("Apellidos: " + alumnoClass.getApellidos());
+            System.out.println("Telefono: " + alumnoClass.getTfno());
+            System.out.println("==========================");
+            System.out.println("");
+        }
+
     }
 
     private static void mostrarAsignaturas() {
+        AsignaturaClass asignaturaClass = new AsignaturaClass();
+        Query query = session.createQuery("from AsignaturaClass");
+        List<AsignaturaClass> lista = query.list();
+        Iterator <AsignaturaClass> iterator = lista.iterator();
+
+        while (iterator.hasNext()){
+            asignaturaClass = (AsignaturaClass) iterator.next();
+            System.out.println("==========================");
+            System.out.println("Codigo: " + asignaturaClass.getCodigo());
+            System.out.println("Nombre: " + asignaturaClass.getNombre());
+            System.out.println("Creditos: " + asignaturaClass.getCreditos());
+            System.out.println("==========================");
+            System.out.println("");
+        }
     }
 
     private static void mostrarAsignaturasAlumnos() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Introduzca el codigo del Alumno: ");
+        int codAlumno = scanner.nextInt();
+
+        Query query = session.createQuery("from AlumnoClass where codigo =: codigo");
+        query.setParameter("codigo", codAlumno);
+
+        AlumnoClass alumnoClass = session.get(AlumnoClass.class, codAlumno);
+
+        if (alumnoClass != null){
+            System.out.println("Codigo: " + alumnoClass.getCodigo());
+            System.out.println("==========================");
+
+            List<AsignaturaClass> asignaturaClasses = query.getResultList();
+
+            for (AsignaturaClass asignaturaClass : asignaturaClasses){
+                System.out.println("==========================");
+                System.out.println("Codigo: " + asignaturaClass.getCodigo());
+                System.out.println("Nombre: " + asignaturaClass.getNombre());
+                System.out.println("");
+            }
+
+        }else{
+            System.out.println("No se ha encontrado ningun alumno con ese codigo.");
+        }
+
+
     }
 
     private static void mostrarAlumnosAsignatura() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Introduzca el codigo de la asignatura: ");
+        int codAsignatura = scanner.nextInt();
+
+        Query query = session.createQuery("from AsignaturaClass where codigo =: codigo");
+        query.setParameter("codigo", codAsignatura);
+
+        AsignaturaClass asignaturaClass = session.get(AsignaturaClass.class, codAsignatura);
+
+        if (asignaturaClass != null){
+            System.out.println("Codigo: " + asignaturaClass.getCodigo());
+            System.out.println("==========================");
+
+            List<AlumnoClass> alumnoClasses = query.getResultList();
+
+            for (AlumnoClass alumnoClass :  alumnoClasses){
+                System.out.println("==========================");
+                System.out.println("Codigo: " + alumnoClass.getCodigo());
+                System.out.println("Nombre: " + alumnoClass.getNombre());
+                System.out.println("Apellidos: " + alumnoClass.getApellidos());
+                System.out.println("Telefono: " + alumnoClass.getTfno());
+            }
+        }else{
+            System.out.println("No se ha encontrado ninguna asignatura con ese codigo.");
+        }
+
     }
 
     private static void mostrarLisadoAlumno() {
+       Query query = session.createQuery("select a, m.asignatura from AlumnoClass a join a.matriculas m");
+        List<Objects[]> resultados = query.getResultList();
+
+        for (Object[] resultado : resultados){
+            AlumnoClass alumnoClass = (AlumnoClass) resultado[0];
+            AsignaturaClass asignaturaClass = (AsignaturaClass) resultado[1];
+
+            System.out.println("=========Datos Alumno=============");
+            System.out.println("Codigo: " + alumnoClass.getCodigo());
+            System.out.println("Nombre: " + alumnoClass.getNombre());
+            System.out.println("Apellido: " + alumnoClass.getApellidos());
+            System.out.println("Telefono: " + alumnoClass.getTfno());
+            System.out.println("=========Datos Asignatura=========");
+            System.out.println("Codigo: " + asignaturaClass.getCodigo());
+            System.out.println("Nombre: " + asignaturaClass.getNombre());
+            System.out.println("Creditos: " + asignaturaClass.getCreditos());
+        }
+
     }
 
     private static void mostrarAlumnosMatriculados() {
+        Query query = session.createQuery("select m.asignatura, count(*) from MatriculaClass m group by m.asignatura");
+        List<Object[]> resultados = query.getResultList();
+
+        for (Object[] resultado : resultados){
+            AsignaturaClass asignaturaClass = (AsignaturaClass) resultado[0];
+            Long numeroAlumnos = (Long) resultado[1];
+
+            System.out.println("==========================");
+            System.out.println("Asignatura: " + asignaturaClass.getNombre());
+            System.out.println("Número de alumnos matriculados: " + numeroAlumnos);
+            System.out.println("==========================");
+        }
     }
 }

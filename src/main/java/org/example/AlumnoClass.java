@@ -12,7 +12,7 @@ public class AlumnoClass {
     private String tfno;
     private List<AsignaturaClass> lista_asignatura;
 
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     @Id
     @Column(name = "codigo", nullable = false)
     public int getCodigo() {
