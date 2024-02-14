@@ -6,10 +6,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Scanner;
+import java.util.*;
 
 /**
  * Hello world!
@@ -72,6 +69,7 @@ public class App
                         break;
                     case 9:
                         mostrarAlumnosMatriculados();
+                        break;
                     case 10:
                         System.out.println("Saliendo del programa, hasta la proxima!!!!");
                 }
@@ -132,6 +130,38 @@ public class App
     }
 
     private static void insercionMatriculas() {
+    Scanner scanner = new Scanner(System.in);
+
+    System.out.println("Introduce el codigo del alumno: ");
+    int codAlumno = scanner.nextInt();
+
+    System.out.println("Introduce el codigo de la asignatura: ");
+    int codAsignatura = scanner.nextInt();
+
+    Transaction transaction = session.beginTransaction();
+
+    AlumnoClass alumnoClass = session.get(AlumnoClass.class, codAlumno);
+    if (alumnoClass == null){
+        transaction.commit();
+        return;
+    }
+
+    AsignaturaClass asignatura = session.get(AsignaturaClass.class, codAsignatura);
+    if (asignatura == null) {
+        transaction.commit();
+        return;
+    }
+
+    List<AsignaturaClass> asignaturaClasses = alumnoClass.getLista_asignatura();
+    if (asignaturaClasses == null){
+        asignaturaClasses = new ArrayList<>();
+    }
+    asignaturaClasses.add(asignatura);
+    alumnoClass.setLista_asignatura(asignaturaClasses);
+
+    session.update(alumnoClass);
+    transaction.commit();
+
 
     }
 
@@ -174,33 +204,36 @@ public class App
 
     private static void mostrarAsignaturasAlumnos() {
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Introduzca el codigo del Alumno: ");
+        System.out.println("Introduzca el código del Alumno: ");
         int codAlumno = scanner.nextInt();
 
-        Query query = session.createQuery("from AlumnoClass where codigo =: codigo");
+        Transaction transaction = session.beginTransaction();
+
+        Query query = session.createQuery("from AlumnoClass where codigo = :codigo");
         query.setParameter("codigo", codAlumno);
 
-        AlumnoClass alumnoClass = session.get(AlumnoClass.class, codAlumno);
+        AlumnoClass alumnoClass = (AlumnoClass) query.uniqueResult();
 
-        if (alumnoClass != null){
-            System.out.println("Codigo: " + alumnoClass.getCodigo());
-            System.out.println("==========================");
-
-            List<AsignaturaClass> asignaturaClasses = query.getResultList();
-
-            for (AsignaturaClass asignaturaClass : asignaturaClasses){
-                System.out.println("==========================");
-                System.out.println("Codigo: " + asignaturaClass.getCodigo());
-                System.out.println("Nombre: " + asignaturaClass.getNombre());
-                System.out.println("");
+        if (alumnoClass != null) {
+            System.out.println("Asignaturas en las que está matriculado el alumno con código:  " + codAlumno);
+            List<AsignaturaClass> asignaturaClasses = alumnoClass.getLista_asignatura();
+            if (!asignaturaClasses.isEmpty()) {
+                for (AsignaturaClass asignaturaClass : asignaturaClasses) {
+                    System.out.println("==========================");
+                    System.out.println("Codigo: " + asignaturaClass.getCodigo());
+                    System.out.println("Nombre: " + asignaturaClass.getNombre());
+                    System.out.println("");
+                }
+            } else {
+                System.out.println("El alumno no está matriculado en ninguna asignatura.");
             }
-
-        }else{
+        } else {
             System.out.println("No se ha encontrado ningun alumno con ese codigo.");
         }
 
-
+        transaction.commit();
     }
+
 
     private static void mostrarAlumnosAsignatura() {
         Scanner scanner = new Scanner(System.in);
@@ -216,7 +249,7 @@ public class App
             System.out.println("Codigo: " + asignaturaClass.getCodigo());
             System.out.println("==========================");
 
-            List<AlumnoClass> alumnoClasses = query.getResultList();
+            List<AlumnoClass> alumnoClasses = asignaturaClass.getLista_alumnos();
 
             for (AlumnoClass alumnoClass :  alumnoClasses){
                 System.out.println("==========================");
@@ -232,8 +265,8 @@ public class App
     }
 
     private static void mostrarLisadoAlumno() {
-       Query query = session.createQuery("select a, m.asignatura from AlumnoClass a join a.matriculas m");
-        List<Objects[]> resultados = query.getResultList();
+        Query query = session.createQuery("select a, asignatura from AlumnoClass a join a.lista_asignatura asignatura");
+        List<Object[]> resultados = query.getResultList();
 
         for (Object[] resultado : resultados){
             AlumnoClass alumnoClass = (AlumnoClass) resultado[0];
@@ -249,21 +282,24 @@ public class App
             System.out.println("Nombre: " + asignaturaClass.getNombre());
             System.out.println("Creditos: " + asignaturaClass.getCreditos());
         }
-
     }
 
+
+
     private static void mostrarAlumnosMatriculados() {
-        Query query = session.createQuery("select m.asignatura, count(*) from MatriculaClass m group by m.asignatura");
+        Query query = session.createQuery("select a.nombre, count(distinct m) from AsignaturaClass a join a.lista_alumnos m group by a.nombre");
         List<Object[]> resultados = query.getResultList();
 
         for (Object[] resultado : resultados){
-            AsignaturaClass asignaturaClass = (AsignaturaClass) resultado[0];
+            String nombreAsignatura = (String) resultado[0];
             Long numeroAlumnos = (Long) resultado[1];
 
             System.out.println("==========================");
-            System.out.println("Asignatura: " + asignaturaClass.getNombre());
+            System.out.println("Asignatura: " + nombreAsignatura);
             System.out.println("Número de alumnos matriculados: " + numeroAlumnos);
             System.out.println("==========================");
         }
     }
+
+
 }
