@@ -287,7 +287,7 @@ public class App
 
 
     private static void mostrarAlumnosMatriculados() {
-        Query query = session.createQuery("select a.nombre, count(distinct m) from AsignaturaClass a join a.lista_alumnos m group by a.nombre");
+        Query query = session.createQuery("select a.nombre, a.nombre, count(m.codigo) from AsignaturaClass a join a.lista_alumnos m group by a.nombre");
         List<Object[]> resultados = query.getResultList();
 
         for (Object[] resultado : resultados){
